@@ -4,7 +4,7 @@ AI-assisted alcohol beverage label verification prototype for Treasury/TTB compl
 
 ## Submission Links
 
-- Source code repository: `https://github.com/YOUR_USERNAME/treasury-ttb-label-verification`
+- Source code repository: `https://github.com/mpampell/treasury-ttb-label-verification`
 - Deployed application: `PASTE_VERCEL_PRODUCTION_URL_HERE`
 
 Replace the two placeholders above after GitHub upload and Vercel deployment.
