@@ -1,5 +1,5 @@
-[Uploading README.md…]()
-# Treasury TTB Label Verification
+[[Uploading README.md…]()
+](https://github.com/mpampell/treasury-ttb-label-verification/blob/main/treasury-ttb-label-verification/README.md)# Treasury TTB Label Verification
 
 AI-assisted alcohol beverage label verification prototype for Treasury/TTB compliance review.
 
