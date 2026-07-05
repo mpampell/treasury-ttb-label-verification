@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200">
+  <rect width="900" height="1200" fill="#f7f7f7"/>
+  <rect x="80" y="60" width="740" height="1180" rx="14" fill="#fffdf8" stroke="#333" stroke-width="8"/>
+  <text x="450" y="160" font-family="Georgia, serif" font-size="58" font-weight="700" text-anchor="middle" fill="#17202a">HARBOR LIGHT</text>
+  <text x="450" y="225" font-family="Georgia, serif" font-size="50" font-weight="700" text-anchor="middle" fill="#17202a">RUM</text>
+  <text x="450" y="340" font-family="Arial, sans-serif" font-size="40" text-anchor="middle" fill="#17202a">Caribbean Rum</text>
+  <text x="450" y="445" font-family="Arial, sans-serif" font-size="35" text-anchor="middle" fill="#17202a">40% Alc./Vol. (80 Proof)</text>
+  <text x="450" y="515" font-family="Arial, sans-serif" font-size="35" text-anchor="middle" fill="#17202a">750 mL</text>
+  <text x="450" y="615" font-family="Arial, sans-serif" font-size="29" text-anchor="middle" fill="#17202a">Bottled by Harbor Light Spirits</text>
+  <text x="450" y="658" font-family="Arial, sans-serif" font-size="29" text-anchor="middle" fill="#17202a">San Juan, PR</text>
+  <rect x="120" y="855" width="660" height="330" fill="#fff" stroke="#17202a" stroke-width="3"/>
+  <text x="145" y="905" font-family="Arial, sans-serif" font-size="25" font-weight="700" fill="#17202a">GOVERNMENT WARNING:</text>
+  <text x="145" y="950" font-family="Arial, sans-serif" font-size="23" fill="#17202a">(1) According to the Surgeon General, women</text>
+  <text x="145" y="984" font-family="Arial, sans-serif" font-size="23" fill="#17202a">should not drink alcoholic beverages during</text>
+  <text x="145" y="1018" font-family="Arial, sans-serif" font-size="23" fill="#17202a">pregnancy because of the risk of birth defects.</text>
+  <text x="145" y="1052" font-family="Arial, sans-serif" font-size="23" fill="#17202a">(2) Consumption of alcoholic beverages impairs</text>
+  <text x="145" y="1086" font-family="Arial, sans-serif" font-size="23" fill="#17202a">your ability to drive a car or operate machinery,</text>
+  <text x="145" y="1120" font-family="Arial, sans-serif" font-size="23" fill="#17202a">and may cause health problems.</text>
+</svg>

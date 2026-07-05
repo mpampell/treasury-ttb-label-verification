@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200">
+  <rect width="900" height="1200" fill="#f5efe8"/>
+  <rect x="85" y="85" width="730" height="1030" rx="16" fill="#fffaf3" stroke="#5c2d1b" stroke-width="9"/>
+  <text x="450" y="180" font-family="Georgia, serif" font-size="60" font-weight="700" text-anchor="middle" fill="#2d1a12">RIVER BEND</text>
+  <text x="450" y="250" font-family="Georgia, serif" font-size="54" font-weight="700" text-anchor="middle" fill="#2d1a12">BREWING</text>
+  <line x1="160" y1="310" x2="740" y2="310" stroke="#5c2d1b" stroke-width="4"/>
+  <text x="450" y="405" font-family="Arial, sans-serif" font-size="42" text-anchor="middle" fill="#17202a">India Pale Ale</text>
+  <text x="450" y="500" font-family="Arial, sans-serif" font-size="36" text-anchor="middle" fill="#17202a">6.2% Alc./Vol.</text>
+  <text x="450" y="570" font-family="Arial, sans-serif" font-size="36" text-anchor="middle" fill="#17202a">12 FL OZ</text>
+  <text x="450" y="670" font-family="Arial, sans-serif" font-size="30" text-anchor="middle" fill="#17202a">Brewed and bottled by River Bend Brewing Co.</text>
+  <text x="450" y="715" font-family="Arial, sans-serif" font-size="30" text-anchor="middle" fill="#17202a">Asheville, NC</text>
+  <rect x="150" y="835" width="600" height="135" rx="8" fill="#f1dfc7" stroke="#5c2d1b" stroke-width="3"/>
+  <text x="450" y="895" font-family="Arial, sans-serif" font-size="30" font-weight="700" text-anchor="middle" fill="#5c2d1b">CRAFT BREWED</text>
+  <text x="450" y="940" font-family="Arial, sans-serif" font-size="24" text-anchor="middle" fill="#5c2d1b">Keep cold. Enjoy responsibly.</text>
+</svg>
