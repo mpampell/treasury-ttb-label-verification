@@ -29,6 +29,20 @@ const OPTIONAL_FIELDS = new Set<FieldKey>(["proof", "countryOfOrigin"]);
 
 export function blankApplicationData(): ApplicationData {
   return {
+    brandName: "",
+    classType: "",
+    abv: "",
+    proof: "",
+    netContents: "",
+    producerName: "",
+    producerAddress: "",
+    countryOfOrigin: "",
+    governmentWarning: WARNING_TEXT
+  };
+}
+
+export function sampleApplicationData(): ApplicationData {
+  return {
     brandName: "OLD TOM DISTILLERY",
     classType: "Kentucky Straight Bourbon Whiskey",
     abv: "45% Alc./Vol.",
@@ -37,6 +51,34 @@ export function blankApplicationData(): ApplicationData {
     producerName: "Old Tom Distillery",
     producerAddress: "Louisville, KY",
     countryOfOrigin: "",
+    governmentWarning: WARNING_TEXT
+  };
+}
+
+export function riverBendApplicationData(): ApplicationData {
+  return {
+    brandName: "RIVER BEND BREWING",
+    classType: "India Pale Ale",
+    abv: "6.2% Alc./Vol.",
+    proof: "",
+    netContents: "12 FL OZ",
+    producerName: "River Bend Brewing Co.",
+    producerAddress: "Asheville, NC",
+    countryOfOrigin: "",
+    governmentWarning: WARNING_TEXT
+  };
+}
+
+export function importedWineApplicationData(): ApplicationData {
+  return {
+    brandName: "CASA VERDE VINEYARDS",
+    classType: "Imported Red Wine",
+    abv: "13.5% Alc./Vol.",
+    proof: "",
+    netContents: "750 mL",
+    producerName: "Casa Verde S.A.",
+    producerAddress: "Mendoza, Argentina",
+    countryOfOrigin: "Argentina",
     governmentWarning: WARNING_TEXT
   };
 }
