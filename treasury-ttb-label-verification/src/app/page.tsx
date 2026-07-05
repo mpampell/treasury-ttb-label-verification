@@ -12,7 +12,13 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { AnalysisResult, ApplicationData, FieldStatus } from "@/lib/types";
-import { blankApplicationData, FIELD_LABELS, WARNING_TEXT } from "@/lib/validation";
+import {
+  blankApplicationData,
+  FIELD_LABELS,
+  importedWineApplicationData,
+  riverBendApplicationData,
+  sampleApplicationData
+} from "@/lib/validation";
 
 type QueuedFile = {
   id: string;
@@ -37,13 +43,48 @@ function statusText(status: string) {
   return status;
 }
 
-function fileToDataUrl(file: File) {
+function readFileAsDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));
     reader.onerror = () => reject(new Error("Unable to read image file."));
     reader.readAsDataURL(file);
   });
+}
+
+function convertSvgToPngDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const svgUrl = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalWidth || 1200;
+      canvas.height = image.naturalHeight || 1200;
+      const context = canvas.getContext("2d");
+      if (!context) {
+        URL.revokeObjectURL(svgUrl);
+        reject(new Error("Unable to prepare SVG image for analysis."));
+        return;
+      }
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(svgUrl);
+      resolve(canvas.toDataURL("image/png"));
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(svgUrl);
+      reject(new Error("Unable to read SVG image."));
+    };
+    image.src = svgUrl;
+  });
+}
+
+function fileToAnalysisDataUrl(file: File) {
+  if (file.type === "image/svg+xml" || file.name.toLowerCase().endsWith(".svg")) {
+    return convertSvgToPngDataUrl(file);
+  }
+  return readFileAsDataUrl(file);
 }
 
 function downloadFile(name: string, content: string, type: string) {
@@ -95,7 +136,7 @@ export default function Home() {
       if (queued.result) continue;
 
       try {
-        const imageDataUrl = await fileToDataUrl(queued.file);
+        const imageDataUrl = await fileToAnalysisDataUrl(queued.file);
         const response = await fetch("/api/analyze", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -185,9 +226,20 @@ export default function Home() {
         <aside className="panel application-panel" aria-label="Application data">
           <div className="panel-heading">
             <h2>Application data</h2>
-            <button type="button" className="secondary" onClick={() => setApplication(blankApplicationData())}>
-              Reset sample
-            </button>
+            <div className="panel-actions">
+              <button type="button" className="secondary" onClick={() => setApplication(sampleApplicationData())}>
+                Old Tom
+              </button>
+              <button type="button" className="secondary" onClick={() => setApplication(riverBendApplicationData())}>
+                River Bend
+              </button>
+              <button type="button" className="secondary" onClick={() => setApplication(importedWineApplicationData())}>
+                Imported wine
+              </button>
+              <button type="button" className="secondary" onClick={() => setApplication(blankApplicationData())}>
+                Clear
+              </button>
+            </div>
           </div>
           <div className="field-grid">
             {fieldOrder.map((key) => (
@@ -195,7 +247,7 @@ export default function Home() {
                 <span>{FIELD_LABELS[key]}</span>
                 {key === "governmentWarning" ? (
                   <textarea
-                    value={application[key] || WARNING_TEXT}
+                    value={application[key]}
                     onChange={(event) =>
                       setApplication((current) => ({ ...current, [key]: event.target.value }))
                     }
