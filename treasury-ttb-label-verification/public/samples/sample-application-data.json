@@ -1,0 +1,35 @@
+{
+  "old_tom_default": {
+    "brandName": "OLD TOM DISTILLERY",
+    "classType": "Kentucky Straight Bourbon Whiskey",
+    "abv": "45% Alc./Vol.",
+    "proof": "90 Proof",
+    "netContents": "750 mL",
+    "producerName": "Old Tom Distillery",
+    "producerAddress": "Louisville, KY",
+    "countryOfOrigin": "",
+    "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems."
+  },
+  "imported_wine": {
+    "brandName": "CASA VERDE VINEYARDS",
+    "classType": "Imported Red Wine",
+    "abv": "13.5% Alc./Vol.",
+    "proof": "",
+    "netContents": "750 mL",
+    "producerName": "Casa Verde S.A.",
+    "producerAddress": "Mendoza, Argentina",
+    "countryOfOrigin": "Argentina",
+    "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems."
+  },
+  "river_bend_missing_warning": {
+    "brandName": "RIVER BEND BREWING",
+    "classType": "India Pale Ale",
+    "abv": "6.2% Alc./Vol.",
+    "proof": "",
+    "netContents": "12 FL OZ",
+    "producerName": "River Bend Brewing Co.",
+    "producerAddress": "Asheville, NC",
+    "countryOfOrigin": "",
+    "governmentWarning": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems."
+  }
+}
