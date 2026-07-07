@@ -8,7 +8,7 @@ AI-assisted alcohol beverage label verification prototype for Treasury/TTB compl
 - Source code repository: [https://github.com/mpampell/treasury-ttb-label-verification](https://github.com/mpampell/treasury-ttb-label-verification)
 - Deployed application: [https://treasury-ttb-label-verification-rky674vtr-mpampells-projects.vercel.app](https://treasury-ttb-label-verification-rky674vtr-mpampells-projects.vercel.app)
 
-The deployed application is already configured with the required server-side environment variables. Reviewers can test the deployed app without creating their own OpenAI API key.
+Reviewers can access Vercel via GitHub account integration.  The deployed application is already configured with the required server-side environment variables. Reviewers can test the deployed app without creating their own OpenAI API key.
 
 ## Reviewer Summary
 
