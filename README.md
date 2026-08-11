@@ -23,6 +23,7 @@ The app is intended to assist human review, not replace it.
 - Label analysis can run before application data is entered
 - Application record form appears after upload so expected values can be mapped before analysis
 - One-click in-app demo that loads a known match/mismatch image pair and mock TTB application records
+- One-click eight-image robustness set for imperfect capture conditions
 - CSV import for expected application records, automatically mapped to each uploaded label by file name
 - AI-assisted extraction of required alcohol label fields
 - Field-level confidence scores and explanations
@@ -32,7 +33,7 @@ The app is intended to assist human review, not replace it.
 - Government Health Warning presence and wording validation
 - Pass, review, or fail status for each label
 - TXT, JSON, and CSV exports
-- PNG sample set for repeatable match and mismatch testing
+- PNG sample set for repeatable match, mismatch, and robustness testing
 - SVG upload support through browser rasterization and JPEG optimization before AI analysis
 
 ## Evaluation Priorities
@@ -116,17 +117,19 @@ Sample labels are included in:
 treasury-ttb-label-verification/public/samples/
 ```
 
-The primary sample set contains 20 PNG files:
+The complete sample set contains 28 PNG files:
 
 - 10 `*-match.png` labels intended to pass when paired with the matching application data.
 - 10 `*-mismatch.png` labels with deliberate label issues such as missing warning text, wrong ABV, brand typo, missing origin, or address mismatch.
+- 8 `*-robust.png` captures covering perspective/glare, curved surfaces, low light, blur, rotation, cropping, occlusion, and split label panels.
 - `sample-applications.csv` with expected application rows keyed by label file name.
 - `sample-application-data.json` with additional illustrative records in structured JSON form.
 
 Expected behavior:
 
-- A `*-match.png` file should produce mostly matching fields when application data matches the corresponding JSON entry.
+- A `*-match.png` file should produce mostly matching fields when application data matches the corresponding application record.
 - A `*-mismatch.png` file should flag the intentional mismatch for that label pair.
+- A `*-robust.png` file uses matching approved values while testing extraction under an imperfect capture condition; two cases deliberately hide required information and should fail on the documented field.
 - If no application data is entered, analysis should still complete and show extracted label values rather than application-data warnings.
 
 The fastest deployed-app test does not require downloading repository files:
@@ -135,6 +138,8 @@ The fastest deployed-app test does not require downloading repository files:
 2. Confirm both sample labels show a mapped `TTB-COLA-TEST-001` application record.
 3. Select **Analyze labels**.
 4. Confirm the match image and intentional mismatch produce distinct field-level results.
+
+Select **Load robustness set (8)** for the expanded capture-quality test suite. The mapped record panel displays each case's expected outcome, expected mismatch fields, and test condition.
 
 See the [Testing guide](treasury-ttb-label-verification/docs/testing-guide.md) for a fuller QA checklist and expected outcomes.
 

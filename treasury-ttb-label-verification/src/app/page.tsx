@@ -20,14 +20,22 @@ type QueuedFile = {
   previewUrl: string;
   application: ApplicationData;
   applicationId?: string;
+  testMetadata?: TestMetadata;
   result?: AnalysisResult;
   error?: string;
+};
+
+type TestMetadata = {
+  testCaseType: string;
+  expectedOverallStatus: string;
+  expectedMismatchFields: string;
+  testCondition: string;
 };
 
 type ApplicationRecord = ApplicationData & {
   fileName: string;
   applicationId: string;
-};
+} & TestMetadata;
 
 const fieldOrder = Object.keys(FIELD_LABELS) as Array<keyof ApplicationData>;
 const ANALYSIS_MAX_IMAGE_EDGE = 1200;
@@ -35,6 +43,16 @@ const ANALYSIS_JPEG_QUALITY = 0.72;
 const DEMO_LABEL_FILES = [
   "01-old-tom-bourbon-match.png",
   "01-old-tom-bourbon-mismatch.png"
+] as const;
+const ROBUSTNESS_LABEL_FILES = [
+  "11-old-tom-perspective-glare-robust.png",
+  "12-river-bend-curved-can-robust.png",
+  "13-casa-verde-low-light-robust.png",
+  "14-harbor-light-warning-cropped-robust.png",
+  "15-north-star-low-resolution-robust.png",
+  "16-blue-canyon-rotated-robust.png",
+  "17-prairie-gin-address-occluded-robust.png",
+  "18-redwood-lager-split-panels-robust.png"
 ] as const;
 
 function statusIcon(status: string) {
@@ -188,7 +206,11 @@ function parseApplicationCsv(text: string): ApplicationRecord[] {
       producerName: values.producerName,
       producerAddress: values.producerAddress,
       countryOfOrigin: values.countryOfOrigin,
-      governmentWarning: values.governmentWarning
+      governmentWarning: values.governmentWarning,
+      testCaseType: values.testCaseType ?? "",
+      expectedOverallStatus: values.expectedOverallStatus ?? "",
+      expectedMismatchFields: values.expectedMismatchFields ?? "",
+      testCondition: values.testCondition ?? ""
     };
   });
 }
@@ -207,6 +229,15 @@ function applicationOnly(record: ApplicationRecord): ApplicationData {
   };
 }
 
+function testMetadataOnly(record: ApplicationRecord): TestMetadata {
+  return {
+    testCaseType: record.testCaseType,
+    expectedOverallStatus: record.expectedOverallStatus,
+    expectedMismatchFields: record.expectedMismatchFields,
+    testCondition: record.testCondition
+  };
+}
+
 function findApplicationRecord(records: ApplicationRecord[], fileName: string) {
   const normalizedFileName = fileName.trim().toLowerCase();
   return records.find((record) => record.fileName.trim().toLowerCase() === normalizedFileName);
@@ -219,7 +250,7 @@ export default function Home() {
   const [files, setFiles] = useState<QueuedFile[]>([]);
   const [activeId, setActiveId] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isLoadingDemo, setIsLoadingDemo] = useState(false);
+  const [loadingSampleSet, setLoadingSampleSet] = useState<"reference" | "robustness" | "">("");
   const [demoError, setDemoError] = useState("");
 
   const activeFile = files.find((file) => file.id === activeId) ?? files[0];
@@ -248,7 +279,8 @@ export default function Home() {
         file,
         previewUrl: URL.createObjectURL(file),
         application: matchingRecord ? applicationOnly(matchingRecord) : blankApplicationData(),
-        applicationId: matchingRecord?.applicationId
+        applicationId: matchingRecord?.applicationId,
+        testMetadata: matchingRecord ? testMetadataOnly(matchingRecord) : undefined
       };
     });
     setFiles((current) => [...current, ...queued]);
@@ -296,6 +328,7 @@ export default function Home() {
           ...queued,
           application: nextApplication,
           applicationId: record.applicationId,
+          testMetadata: testMetadataOnly(record),
           result: queued.result
             ? {
                 ...queued.result,
@@ -330,14 +363,17 @@ export default function Home() {
     }
   }
 
-  async function loadDemo() {
-    setIsLoadingDemo(true);
+  async function loadSampleSet(
+    labelFiles: readonly string[],
+    sampleSet: "reference" | "robustness"
+  ) {
+    setLoadingSampleSet(sampleSet);
     setDemoError("");
 
     try {
       const [csvResponse, ...imageResponses] = await Promise.all([
         fetch("/samples/sample-applications.csv"),
-        ...DEMO_LABEL_FILES.map((fileName) => fetch(`/samples/${fileName}`))
+        ...labelFiles.map((fileName) => fetch(`/samples/${fileName}`))
       ]);
 
       if (!csvResponse.ok || imageResponses.some((response) => !response.ok)) {
@@ -348,16 +384,16 @@ export default function Home() {
       const sampleFiles = await Promise.all(
         imageResponses.map(async (response, index) => {
           const blob = await response.blob();
-          return new File([blob], DEMO_LABEL_FILES[index], { type: blob.type || "image/png" });
+          return new File([blob], labelFiles[index], { type: blob.type || "image/png" });
         })
       );
 
       applyApplicationRecords(records, "Built-in Treasury test records");
       queueFiles(sampleFiles, records);
     } catch (error) {
-      setDemoError(error instanceof Error ? error.message : "Unable to load the built-in demo.");
+      setDemoError(error instanceof Error ? error.message : "Unable to load the built-in sample set.");
     } finally {
-      setIsLoadingDemo(false);
+      setLoadingSampleSet("");
     }
   }
 
@@ -367,6 +403,13 @@ export default function Home() {
       activeFile.id,
       applicationOnly(matchingApplicationRecord),
       matchingApplicationRecord.applicationId
+    );
+    setFiles((current) =>
+      current.map((file) =>
+        file.id === activeFile.id
+          ? { ...file, testMetadata: testMetadataOnly(matchingApplicationRecord) }
+          : file
+      )
     );
   }
 
@@ -526,9 +569,23 @@ export default function Home() {
                 onChange={(event) => event.target.files && addFiles(event.target.files)}
               />
             </label>
-            <button type="button" className="secondary" disabled={isLoadingDemo} onClick={() => void loadDemo()}>
-              {isLoadingDemo ? <Loader2 className="spin" aria-hidden="true" /> : null}
-              {isLoadingDemo ? "Loading demo" : "Load sample match and mismatch"}
+            <button
+              type="button"
+              className="secondary"
+              disabled={Boolean(loadingSampleSet)}
+              onClick={() => void loadSampleSet(DEMO_LABEL_FILES, "reference")}
+            >
+              {loadingSampleSet === "reference" ? <Loader2 className="spin" aria-hidden="true" /> : null}
+              {loadingSampleSet === "reference" ? "Loading samples" : "Load sample match and mismatch"}
+            </button>
+            <button
+              type="button"
+              className="secondary"
+              disabled={Boolean(loadingSampleSet)}
+              onClick={() => void loadSampleSet(ROBUSTNESS_LABEL_FILES, "robustness")}
+            >
+              {loadingSampleSet === "robustness" ? <Loader2 className="spin" aria-hidden="true" /> : null}
+              {loadingSampleSet === "robustness" ? "Loading samples" : "Load robustness set (8)"}
             </button>
           </div>
 
@@ -643,6 +700,27 @@ export default function Home() {
               <strong>{activeFile.applicationId || "Manual entry"}</strong>
               <small>{activeFile.file.name}</small>
             </div>
+
+            {activeFile.testMetadata?.testCaseType ? (
+              <dl className="test-metadata">
+                <div>
+                  <dt>Test case</dt>
+                  <dd>{activeFile.testMetadata.testCaseType.replaceAll("_", " ")}</dd>
+                </div>
+                <div>
+                  <dt>Expected result</dt>
+                  <dd>{activeFile.testMetadata.expectedOverallStatus.replaceAll("_", " ")}</dd>
+                </div>
+                <div>
+                  <dt>Expected mismatch fields</dt>
+                  <dd>{activeFile.testMetadata.expectedMismatchFields || "None"}</dd>
+                </div>
+                <div>
+                  <dt>Condition</dt>
+                  <dd>{activeFile.testMetadata.testCondition}</dd>
+                </div>
+              </dl>
+            ) : null}
 
             <div className="application-import">
               <button type="button" className="primary" onClick={() => void loadSampleApplications()}>

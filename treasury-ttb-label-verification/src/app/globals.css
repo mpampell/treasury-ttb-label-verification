@@ -165,6 +165,33 @@ h2 {
   overflow-wrap: anywhere;
 }
 
+.test-metadata {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 10px 0 0;
+}
+
+.test-metadata div {
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #f8fafc;
+}
+
+.test-metadata dt {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.test-metadata dd {
+  margin: 3px 0 0;
+  font-size: 0.86rem;
+  overflow-wrap: anywhere;
+}
+
 .helper-text {
   margin: 12px 0 0;
   font-size: 0.86rem;
@@ -550,6 +577,10 @@ meter {
   }
 
   .dropzone {
+    grid-template-columns: 1fr;
+  }
+
+  .test-metadata {
     grid-template-columns: 1fr;
   }
 }
