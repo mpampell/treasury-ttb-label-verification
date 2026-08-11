@@ -35,14 +35,16 @@ public/samples/sample-applications.csv
 public/samples/sample-application-data.json
 ```
 
+The CSV is the complete filename-mapping dataset for all 20 PNG labels. The JSON file contains additional illustrative structured-record examples.
+
 Recommended workflow:
 
-1. Upload one or more label images.
-2. Run analysis.
-3. Confirm extracted label values render without requiring application data.
-4. Import `sample-applications.csv` in the Expected application data panel.
-5. Select an analyzed label and click **Load matching row**.
-6. Confirm the comparison updates and flags the intended match or mismatch.
+1. Select **Load sample match and mismatch** in the deployed app. This loads two sample labels and the corresponding mock TTB application records without requiring local repository access.
+2. Confirm both labels show application ID `TTB-COLA-TEST-001` in the Expected TTB application record panel.
+3. Run analysis.
+4. Confirm the match label and intentional mismatch produce distinct field-level results.
+5. For broader batch testing, upload any of the 20 PNG files and select **Load built-in test records**, or import `sample-applications.csv`. Matching application rows are applied automatically by exact file name.
+6. Select several analyzed labels and confirm each retains its own application ID and expected values.
 
 The CSV represents structured application records. In a production workflow, these rows would come from COLA/application-system data or an internal case database rather than manual entry.
 
@@ -56,7 +58,7 @@ For each sample:
 - Analysis does not require application data.
 - Side-by-side comparison renders.
 - CSV application data imports successfully.
-- Matching application row loads for the selected label file.
+- Matching application row is applied automatically and remains isolated to its label file.
 - Field-level explanations are visible.
 - Field-level confidence appears as a readable percentage and a meter.
 - Government Warning status matches expectation.

@@ -18,6 +18,8 @@ type QueuedFile = {
   id: string;
   file: File;
   previewUrl: string;
+  application: ApplicationData;
+  applicationId?: string;
   result?: AnalysisResult;
   error?: string;
 };
@@ -30,6 +32,10 @@ type ApplicationRecord = ApplicationData & {
 const fieldOrder = Object.keys(FIELD_LABELS) as Array<keyof ApplicationData>;
 const ANALYSIS_MAX_IMAGE_EDGE = 1200;
 const ANALYSIS_JPEG_QUALITY = 0.72;
+const DEMO_LABEL_FILES = [
+  "01-old-tom-bourbon-match.png",
+  "01-old-tom-bourbon-mismatch.png"
+] as const;
 
 function statusIcon(status: string) {
   if (status === "match") return <CheckCircle2 aria-hidden="true" />;
@@ -201,20 +207,25 @@ function applicationOnly(record: ApplicationRecord): ApplicationData {
   };
 }
 
+function findApplicationRecord(records: ApplicationRecord[], fileName: string) {
+  const normalizedFileName = fileName.trim().toLowerCase();
+  return records.find((record) => record.fileName.trim().toLowerCase() === normalizedFileName);
+}
+
 export default function Home() {
-  const [application, setApplication] = useState<ApplicationData>(blankApplicationData());
   const [applicationRecords, setApplicationRecords] = useState<ApplicationRecord[]>([]);
   const [applicationCsvName, setApplicationCsvName] = useState("");
   const [applicationCsvError, setApplicationCsvError] = useState("");
   const [files, setFiles] = useState<QueuedFile[]>([]);
   const [activeId, setActiveId] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoadingDemo, setIsLoadingDemo] = useState(false);
+  const [demoError, setDemoError] = useState("");
 
   const activeFile = files.find((file) => file.id === activeId) ?? files[0];
   const results = files.map((file) => file.result).filter(Boolean) as AnalysisResult[];
-  const hasAnalyzedLabel = results.length > 0;
   const matchingApplicationRecord = activeFile
-    ? applicationRecords.find((record) => record.fileName === activeFile.file.name)
+    ? findApplicationRecord(applicationRecords, activeFile.file.name)
     : undefined;
   const batchStats = useMemo(
     () => ({
@@ -228,54 +239,135 @@ export default function Home() {
     [files.length, results]
   );
 
-  function addFiles(selected: FileList | File[]) {
+  function queueFiles(selected: FileList | File[], records = applicationRecords) {
     const imageFiles = Array.from(selected).filter((file) => file.type.startsWith("image/"));
-    const queued = imageFiles.map((file) => ({
-      id: `${file.name}-${file.size}-${crypto.randomUUID()}`,
-      file,
-      previewUrl: URL.createObjectURL(file)
-    }));
+    const queued = imageFiles.map((file) => {
+      const matchingRecord = findApplicationRecord(records, file.name);
+      return {
+        id: `${file.name}-${file.size}-${crypto.randomUUID()}`,
+        file,
+        previewUrl: URL.createObjectURL(file),
+        application: matchingRecord ? applicationOnly(matchingRecord) : blankApplicationData(),
+        applicationId: matchingRecord?.applicationId
+      };
+    });
     setFiles((current) => [...current, ...queued]);
     if (!activeId && queued[0]) setActiveId(queued[0].id);
   }
 
-  function applyApplication(nextApplication: ApplicationData) {
-    setApplication(nextApplication);
+  function addFiles(selected: FileList | File[]) {
+    queueFiles(selected);
+  }
+
+  function applyApplication(fileId: string, nextApplication: ApplicationData, applicationId?: string) {
     setFiles((current) =>
       current.map((file) => {
-        if (!file.result) return file;
+        if (file.id !== fileId) return file;
         return {
           ...file,
-          result: {
-            ...file.result,
-            ...compareLabel(nextApplication, file.result.extracted)
-          }
+          application: nextApplication,
+          applicationId,
+          result: file.result
+            ? {
+                ...file.result,
+                ...compareLabel(nextApplication, file.result.extracted)
+              }
+            : file.result
         };
       })
     );
   }
 
   function updateApplicationField(key: keyof ApplicationData, value: string) {
-    applyApplication({ ...application, [key]: value });
+    if (!activeFile) return;
+    applyApplication(activeFile.id, { ...activeFile.application, [key]: value });
+  }
+
+  function applyApplicationRecords(records: ApplicationRecord[], sourceName: string) {
+    setApplicationRecords(records);
+    setApplicationCsvName(sourceName);
+    setApplicationCsvError("");
+    setFiles((current) =>
+      current.map((queued) => {
+        const record = findApplicationRecord(records, queued.file.name);
+        if (!record) return queued;
+        const nextApplication = applicationOnly(record);
+        return {
+          ...queued,
+          application: nextApplication,
+          applicationId: record.applicationId,
+          result: queued.result
+            ? {
+                ...queued.result,
+                ...compareLabel(nextApplication, queued.result.extracted)
+              }
+            : queued.result
+        };
+      })
+    );
   }
 
   async function importApplicationCsv(file: File) {
     try {
       const text = await readFileAsText(file);
       const records = parseApplicationCsv(text);
-      setApplicationRecords(records);
-      setApplicationCsvName(file.name);
-      setApplicationCsvError("");
+      applyApplicationRecords(records, file.name);
     } catch (error) {
-      setApplicationRecords([]);
-      setApplicationCsvName("");
       setApplicationCsvError(error instanceof Error ? error.message : "Unable to import CSV.");
     }
   }
 
+  async function loadSampleApplications() {
+    try {
+      const response = await fetch("/samples/sample-applications.csv");
+      if (!response.ok) throw new Error("Built-in sample application data is unavailable.");
+      const records = parseApplicationCsv(await response.text());
+      applyApplicationRecords(records, "Built-in Treasury test records");
+    } catch (error) {
+      setApplicationCsvError(
+        error instanceof Error ? error.message : "Unable to load built-in sample application data."
+      );
+    }
+  }
+
+  async function loadDemo() {
+    setIsLoadingDemo(true);
+    setDemoError("");
+
+    try {
+      const [csvResponse, ...imageResponses] = await Promise.all([
+        fetch("/samples/sample-applications.csv"),
+        ...DEMO_LABEL_FILES.map((fileName) => fetch(`/samples/${fileName}`))
+      ]);
+
+      if (!csvResponse.ok || imageResponses.some((response) => !response.ok)) {
+        throw new Error("The built-in demo files are unavailable.");
+      }
+
+      const records = parseApplicationCsv(await csvResponse.text());
+      const sampleFiles = await Promise.all(
+        imageResponses.map(async (response, index) => {
+          const blob = await response.blob();
+          return new File([blob], DEMO_LABEL_FILES[index], { type: blob.type || "image/png" });
+        })
+      );
+
+      applyApplicationRecords(records, "Built-in Treasury test records");
+      queueFiles(sampleFiles, records);
+    } catch (error) {
+      setDemoError(error instanceof Error ? error.message : "Unable to load the built-in demo.");
+    } finally {
+      setIsLoadingDemo(false);
+    }
+  }
+
   function loadMatchingApplication() {
-    if (!matchingApplicationRecord) return;
-    applyApplication(applicationOnly(matchingApplicationRecord));
+    if (!activeFile || !matchingApplicationRecord) return;
+    applyApplication(
+      activeFile.id,
+      applicationOnly(matchingApplicationRecord),
+      matchingApplicationRecord.applicationId
+    );
   }
 
   async function analyze() {
@@ -293,7 +385,7 @@ export default function Home() {
           body: JSON.stringify({
             fileName: queued.file.name,
             imageDataUrl,
-            application
+            application: queued.application
           })
         });
         const payload = await response.json();
@@ -319,7 +411,11 @@ export default function Home() {
       JSON.stringify(
         {
           exportedAt: new Date().toISOString(),
-          applicationData: application,
+          applicationDataByFile: files.map((file) => ({
+            fileName: file.file.name,
+            applicationId: file.applicationId ?? "",
+            application: file.application
+          })),
           applicationCsv: applicationCsvName,
           results
         },
@@ -336,6 +432,7 @@ export default function Home() {
       [
         "exported_at",
         "file",
+        "application_id",
         "application_csv",
         "overall_status",
         "elapsed_ms",
@@ -349,10 +446,12 @@ export default function Home() {
         "extraction_summary",
         "image_quality_notes"
       ],
-      ...results.flatMap((result) =>
-        result.fields.map((field) => [
+      ...results.flatMap((result) => {
+        const applicationId = files.find((file) => file.file.name === result.fileName)?.applicationId ?? "";
+        return result.fields.map((field) => [
           exportedAt,
           result.fileName,
+          applicationId,
           applicationCsvName,
           result.overallStatus,
           String(result.elapsedMs),
@@ -365,8 +464,8 @@ export default function Home() {
           field.explanation,
           result.extracted.extractionSummary,
           result.extracted.imageQualityNotes.join("; ")
-        ])
-      )
+        ]);
+      })
     ];
     const csv = rows
       .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
@@ -378,7 +477,7 @@ export default function Home() {
     const text = results
       .map(
         (result) =>
-          `${result.fileName}\nStatus: ${statusText(result.overallStatus)}\nElapsed: ${result.elapsedMs}ms\n${result.summary}\n\n${result.fields
+          `${result.fileName}\nApplication ID: ${files.find((file) => file.file.name === result.fileName)?.applicationId || "Not mapped"}\nStatus: ${statusText(result.overallStatus)}\nElapsed: ${result.elapsedMs}ms\n${result.summary}\n\n${result.fields
             .map(
               (field) =>
                 `${field.label}: ${fieldStatusText(field.status).toUpperCase()}\nExpected: ${field.expected || "(blank)"}\nExtracted: ${field.extracted || "(not detected)"}\nConfidence: ${Math.round(field.confidence * 100)}%\nReason: ${field.explanation}`
@@ -403,7 +502,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className={`workspace ${hasAnalyzedLabel ? "with-application" : ""}`}>
+      <section className={`workspace ${activeFile ? "with-application" : ""}`}>
         <section className="main-panel">
           <div
             className="dropzone"
@@ -427,7 +526,13 @@ export default function Home() {
                 onChange={(event) => event.target.files && addFiles(event.target.files)}
               />
             </label>
+            <button type="button" className="secondary" disabled={isLoadingDemo} onClick={() => void loadDemo()}>
+              {isLoadingDemo ? <Loader2 className="spin" aria-hidden="true" /> : null}
+              {isLoadingDemo ? "Loading demo" : "Load sample match and mismatch"}
+            </button>
           </div>
+
+          {demoError ? <p className="error compact">{demoError}</p> : null}
 
           <div className="action-row">
             <button type="button" className="primary" disabled={!files.length || isProcessing} onClick={analyze}>
@@ -517,16 +622,32 @@ export default function Home() {
           )}
         </section>
 
-        {hasAnalyzedLabel ? (
+        {activeFile ? (
           <aside className="panel application-panel" aria-label="Expected application data">
             <div className="panel-heading">
-              <h2>Expected application data</h2>
-              <button type="button" className="secondary" onClick={() => applyApplication(blankApplicationData())}>
+              <div>
+                <p className="eyebrow">Filename-mapped test input</p>
+                <h2>Expected TTB application record</h2>
+              </div>
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => applyApplication(activeFile.id, blankApplicationData())}
+              >
                 Clear
               </button>
             </div>
 
+            <div className={`record-context ${activeFile.applicationId ? "mapped" : "unmapped"}`}>
+              <span>{activeFile.applicationId ? "Mapped application" : "No mapped application"}</span>
+              <strong>{activeFile.applicationId || "Manual entry"}</strong>
+              <small>{activeFile.file.name}</small>
+            </div>
+
             <div className="application-import">
+              <button type="button" className="primary" onClick={() => void loadSampleApplications()}>
+                Load built-in test records
+              </button>
               <label className="secondary file-button">
                 Import CSV
                 <input
@@ -545,17 +666,19 @@ export default function Home() {
                 disabled={!matchingApplicationRecord}
                 onClick={loadMatchingApplication}
               >
-                Load matching row
+                Reload matching row
               </button>
             </div>
 
             {applicationCsvName ? (
               <p className="helper-text">
-                {applicationRecords.length} application rows loaded from {applicationCsvName}.
+                {applicationRecords.length} application rows loaded from {applicationCsvName}. Matching rows are
+                applied automatically by exact label file name.
               </p>
             ) : (
               <p className="helper-text">
-                Import a CSV with one row per label image, then load the row matching the selected file name.
+                Load the built-in records for the included sample labels, import a CSV, or enter one application
+                record manually before analysis.
               </p>
             )}
             {activeFile && applicationRecords.length > 0 && !matchingApplicationRecord ? (
@@ -569,12 +692,12 @@ export default function Home() {
                   <span>{FIELD_LABELS[key]}</span>
                   {key === "governmentWarning" ? (
                     <textarea
-                      value={application[key]}
+                      value={activeFile.application[key]}
                       onChange={(event) => updateApplicationField(key, event.target.value)}
                     />
                   ) : (
                     <input
-                      value={application[key]}
+                      value={activeFile.application[key]}
                       onChange={(event) => updateApplicationField(key, event.target.value)}
                     />
                   )}

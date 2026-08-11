@@ -1,0 +1,5 @@
+treasury-ttb-label-verification/.next/
+treasury-ttb-label-verification/node_modules/
+treasury-ttb-label-verification/*.tsbuildinfo
+treasury-ttb-label-verification/.env*
+!treasury-ttb-label-verification/.env.example

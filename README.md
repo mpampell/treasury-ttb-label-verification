@@ -21,8 +21,9 @@ The app is intended to assist human review, not replace it.
 - Single image upload and batch image upload
 - Side-by-side label image and application comparison
 - Label analysis can run before application data is entered
-- Optional application comparison form appears after analysis
-- CSV import for expected application records, matched to uploaded label file names
+- Application record form appears after upload so expected values can be mapped before analysis
+- One-click in-app demo that loads a known match/mismatch image pair and mock TTB application records
+- CSV import for expected application records, automatically mapped to each uploaded label by file name
 - AI-assisted extraction of required alcohol label fields
 - Field-level confidence scores and explanations
 - Deterministic matching that ignores capitalization, punctuation, and whitespace for ordinary label fields
@@ -120,7 +121,7 @@ The primary sample set contains 20 PNG files:
 - 10 `*-match.png` labels intended to pass when paired with the matching application data.
 - 10 `*-mismatch.png` labels with deliberate label issues such as missing warning text, wrong ABV, brand typo, missing origin, or address mismatch.
 - `sample-applications.csv` with expected application rows keyed by label file name.
-- `sample-application-data.json` with the same expected values in structured JSON form.
+- `sample-application-data.json` with additional illustrative records in structured JSON form.
 
 Expected behavior:
 
@@ -128,13 +129,20 @@ Expected behavior:
 - A `*-mismatch.png` file should flag the intentional mismatch for that label pair.
 - If no application data is entered, analysis should still complete and show extracted label values rather than application-data warnings.
 
+The fastest deployed-app test does not require downloading repository files:
+
+1. Select **Load sample match and mismatch**.
+2. Confirm both sample labels show a mapped `TTB-COLA-TEST-001` application record.
+3. Select **Analyze labels**.
+4. Confirm the match image and intentional mismatch produce distinct field-level results.
+
 See the [Testing guide](treasury-ttb-label-verification/docs/testing-guide.md) for a fuller QA checklist and expected outcomes.
 
 ## Application Data Mechanism
 
 The assignment expects label data to be compared against application data. In a production TTB workflow, that application data would usually come from an existing structured source such as COLA/application-system records or an internal case database. This prototype does not attempt to OCR or parse full company application documents.
 
-For reviewer testing, the prototype supports CSV import. The CSV uses one row per label image and includes a `fileName` column so the app can load the expected application row for the selected uploaded label.
+For reviewer testing, the prototype supports built-in mock records and CSV import. The CSV uses one row per label image and includes a `fileName` column so the app automatically maps the expected application row to each uploaded label. Each label retains its own application record throughout batch analysis.
 
 ## Local Run
 
