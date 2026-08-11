@@ -11,7 +11,7 @@ This prototype is a single-page Next.js application deployed on Vercel. It lets 
 - **API route**: `src/app/api/analyze/route.ts` receives an image data URL and application data. The OpenAI key stays server-side.
 - **AI extraction**: `src/lib/extraction.ts` calls the OpenAI Responses API with a vision-capable model and requests structured JSON.
 - **Validation engine**: `src/lib/validation.ts` performs deterministic matching, field presence checks, numeric normalization, and government warning validation.
-- **Sample assets**: `public/samples` includes 20 PNG sample labels, organized as 10 match/mismatch pairs for repeatable tests.
+- **Sample assets**: `public/samples` includes 28 PNG sample labels: 10 match/mismatch pairs plus eight controlled robustness cases for perspective, glare, curvature, low light, blur, rotation, cropping, occlusion, and split panels.
 
 ## Data Flow
 
