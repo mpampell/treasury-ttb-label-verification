@@ -161,11 +161,10 @@ From the app folder:
 
 ```bash
 cd treasury-ttb-label-verification
-pnpm install
-cp .env.example .env.local
+pnpm install --frozen-lockfile
 ```
 
-Set environment variables in `.env.local`:
+Create `.env.local` and set:
 
 ```bash
 OPENAI_API_KEY=your_key_here

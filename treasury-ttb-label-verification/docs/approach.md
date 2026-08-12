@@ -4,7 +4,7 @@
 
 The prototype separates AI extraction from compliance validation. OpenAI vision extracts structured fields and visible text from a label image. Local validation code checks required label content and Government Warning compliance, then compares those fields to application data when application data is provided.
 
-Application data is treated as a structured source of truth. In production, it would come from COLA/application-system records or an internal case database. For this prototype, reviewers can import a CSV of expected application rows keyed by uploaded label file name.
+Application data is treated as a structured source of truth. In production, it would come from COLA/application-system records or an internal case database. For this prototype, reviewers can load the built-in records or import a CSV of expected application rows keyed by uploaded label file name.
 
 This structure makes the behavior easier to test and explain: AI handles OCR-like interpretation, while the application owns the compliance decision support.
 
@@ -18,11 +18,19 @@ The confidence values are not used as the only basis for compliance status. Requ
 
 - Required fields must be present unless explicitly optional.
 - Label analysis does not require application data.
-- Application comparison can use manual entry or imported CSV rows.
+- Application comparison can use manual entry, built-in records, or imported CSV rows.
 - Text comparison ignores capitalization, punctuation, and extra whitespace.
 - ABV, proof, and net contents compare normalized numeric values where appropriate.
 - Government Warning validation is strict: `GOVERNMENT WARNING:` must be uppercase and the required statement must match exactly.
 - The app returns `pass`, `review`, or `fail` to avoid overstating certainty.
+
+## Test Data and Robustness Strategy
+
+The repository includes 28 controlled PNG fixtures: 10 clean reference labels, 10 intentional mismatch labels, and eight robustness cases derived from the clean labels. The robustness cases vary perspective, glare, curvature, lighting, resolution, rotation, cropping, occlusion, and panel layout without changing the approved application values.
+
+`sample-applications.csv` maps every fixture to an application record and includes QA-only metadata for the test case type, expected overall result, expected mismatch fields, and capture condition. This metadata is shown to the reviewer but is not sent to the extraction model, so it does not disclose the expected answer during AI extraction.
+
+The robustness images are deterministic test fixtures generated outside the running application. They evaluate how the existing extraction workflow handles imperfect inputs; they are not evidence of a production image-correction pipeline.
 
 ## Tools Used
 
@@ -31,6 +39,7 @@ The confidence values are not used as the only basis for compliance status. Requ
 - OpenAI Responses API for vision-based extraction.
 - TypeScript for maintainability.
 - Local deterministic validation for matching and government warning checks.
+- ImageMagick for reproducible generation of robustness test fixtures.
 
 ## Assumptions
 
@@ -46,7 +55,7 @@ The confidence values are not used as the only basis for compliance status. Requ
 - For speed, the browser compresses label images before analysis and the API uses faster vision detail. This improves latency but may reduce OCR accuracy on very small, blurry, or low-contrast warning text.
 - Users should upload cropped label images under about 1-2 MB when possible. Full-resolution phone photos increase upload and model latency without always improving extraction quality.
 - A production version could use a two-pass workflow: fast first-pass extraction for all labels, then optional high-accuracy review for low-confidence or failed labels.
-- A full image preprocessing pipeline was not implemented. The prototype relies on the vision model to interpret many imperfect images and to report quality concerns.
+- A runtime image preprocessing pipeline was not implemented. The prototype relies on the vision model to interpret many imperfect images and to report quality concerns.
 - Batch processing is sequential rather than parallel to reduce rate-limit and timeout risk in a prototype deployment.
 - The app does not persist uploaded images or review history beyond the current browser session, which keeps the prototype simpler and more privacy-conscious.
 - PDF export is not included; TXT, JSON, and CSV exports are implemented for reviewer portability.
